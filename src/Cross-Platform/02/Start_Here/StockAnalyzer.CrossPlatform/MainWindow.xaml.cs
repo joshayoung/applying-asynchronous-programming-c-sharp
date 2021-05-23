@@ -54,13 +54,19 @@ namespace StockAnalyzer.CrossPlatform
         {
             BeforeLoadingStockData();
 
-            var store = new DataStore();
+            try
+            {
+                var store = new DataStore();
 
-            var responseTask = store.GetStockPrices(StockIdentifier.Text);
+                var responseTask = store.GetStockPrices(StockIdentifier.Text);
 
-            Stocks.Items = await responseTask;
-            //Stocks.ItemsSource = await responseTask;
-            
+                Stocks.Items = await responseTask;
+            }
+            catch (Exception ex)
+            {
+                Notes.Text = ex.Message;
+            }
+
             AfterLoadingStockData();
         }
 
