@@ -46,27 +46,25 @@ namespace StockAnalyzer.CrossPlatform
             /// Data provided for free by <a href="https://iextrading.com/developer/" RequestNavigate="Hyperlink_OnRequestNavigate">IEX</Hyperlink>. View <Hyperlink NavigateUri="https://iextrading.com/api-exhibit-a/" RequestNavigate="Hyperlink_OnRequestNavigate">IEX’s Terms of Use.</Hyperlink>
         }
 
-
-
-
         private static string API_URL = "https://ps-async.fekberg.com/api/stocks";
         private Stopwatch stopwatch = new Stopwatch();
 
-        private void Search_Click(object sender, RoutedEventArgs e)
+        private async void Search_Click(object sender, RoutedEventArgs e)
         {
             BeforeLoadingStockData();
 
-            var client = new WebClient();
+            using (var client = new HttpClient())
+            {
+                var responseTask = client.GetAsync($"{API_URL}/{StockIdentifier.Text}");
 
-            var content = client.DownloadString($"{API_URL}/{StockIdentifier.Text}");
+                var response = await responseTask;
 
-            // Simulate that the web call takes a very long time
-            Thread.Sleep(10000);
+                var content = await response.Content.ReadAsStringAsync();
+                    
+                var data = JsonConvert.DeserializeObject<IEnumerable<StockPrice>>(content);
 
-            var data = JsonConvert.DeserializeObject<IEnumerable<StockPrice>>(content);
-
-            // This is the same as ItemsSource in WPF used in the course videos
-            Stocks.Items = data;
+                Stocks.Items = data;
+            }
 
             AfterLoadingStockData();
         }
