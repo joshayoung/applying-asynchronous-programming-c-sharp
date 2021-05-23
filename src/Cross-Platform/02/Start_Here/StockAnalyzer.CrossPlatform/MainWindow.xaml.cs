@@ -13,6 +13,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using StockAnalyzer.Core;
 
 namespace StockAnalyzer.CrossPlatform
 {
@@ -53,28 +54,15 @@ namespace StockAnalyzer.CrossPlatform
         {
             BeforeLoadingStockData();
 
-            using (var client = new HttpClient())
-            {
-                var responseTask = client.GetAsync($"{API_URL}/{StockIdentifier.Text}");
+            var store = new DataStore();
 
-                var response = await responseTask;
+            var responseTask = store.GetStockPrices(StockIdentifier.Text);
 
-                var content = await response.Content.ReadAsStringAsync();
-                    
-                var data = JsonConvert.DeserializeObject<IEnumerable<StockPrice>>(content);
-
-                Stocks.Items = data;
-            }
-
+            Stocks.Items = await responseTask;
+            //Stocks.ItemsSource = await responseTask;
+            
             AfterLoadingStockData();
         }
-
-
-
-
-
-
-
 
         private void BeforeLoadingStockData()
         {
