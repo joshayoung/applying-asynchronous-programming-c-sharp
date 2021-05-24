@@ -54,10 +54,17 @@ namespace StockAnalyzer.CrossPlatform
         {
             BeforeLoadingStockData();
 
-            var getStocksTask = GetStocks();
-
-            await getStocksTask;
-
+            try
+            {
+                // Because we are not using 'await', we will not catch the exception:
+                // The error will therefore not be displayed on the page.
+                GetStocks();
+            }
+            catch (Exception ex)
+            {
+                Notes.Text = ex.Message;
+            }
+            
             AfterLoadingStockData();
         }
 
@@ -73,7 +80,7 @@ namespace StockAnalyzer.CrossPlatform
             }
             catch (Exception ex)
             {
-                Notes.Text = ex.Message;
+                throw ex;
             }
         }
 
