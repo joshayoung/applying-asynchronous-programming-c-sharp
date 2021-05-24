@@ -54,6 +54,15 @@ namespace StockAnalyzer.CrossPlatform
         {
             BeforeLoadingStockData();
 
+            var getStocksTask = GetStocks();
+
+            await getStocksTask;
+
+            AfterLoadingStockData();
+        }
+
+        public async Task GetStocks()
+        {
             try
             {
                 var store = new DataStore();
@@ -66,8 +75,6 @@ namespace StockAnalyzer.CrossPlatform
             {
                 Notes.Text = ex.Message;
             }
-
-            AfterLoadingStockData();
         }
 
         private void BeforeLoadingStockData()
