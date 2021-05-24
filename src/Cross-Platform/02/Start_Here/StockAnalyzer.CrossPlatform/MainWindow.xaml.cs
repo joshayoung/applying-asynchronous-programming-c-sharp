@@ -68,7 +68,8 @@ namespace StockAnalyzer.CrossPlatform
             AfterLoadingStockData();
         }
 
-        public async Task GetStocks()
+        // When exceptions are throw in 'async void', they cannot be caught:
+        public async void GetStocks()
         {
             try
             {
