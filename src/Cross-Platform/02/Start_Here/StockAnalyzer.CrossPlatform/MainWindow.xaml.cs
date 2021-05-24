@@ -50,26 +50,30 @@ namespace StockAnalyzer.CrossPlatform
         private static string API_URL = "https://ps-async.fekberg.com/api/stocks";
         private Stopwatch stopwatch = new Stopwatch();
 
+        // This has to be 'async void', because it is an event:
+        // Wrap in try-catch for safety:
+        // Make sure that no code in the async-void method can throw an exception:
         private async void Search_Click(object sender, RoutedEventArgs e)
         {
-            BeforeLoadingStockData();
-
             try
             {
+                BeforeLoadingStockData();
                 // Because we are not using 'await', we will not catch the exception:
                 // The error will therefore not be displayed on the page.
-                GetStocks();
+                await GetStocks();
             }
             catch (Exception ex)
             {
                 Notes.Text = ex.Message;
             }
-            
-            AfterLoadingStockData();
+            finally
+            {
+                AfterLoadingStockData();
+            }
         }
 
         // When exceptions are throw in 'async void', they cannot be caught:
-        public async void GetStocks()
+        public async Task GetStocks()
         {
             try
             {
