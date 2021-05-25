@@ -70,7 +70,7 @@ namespace StockAnalyzer.CrossPlatform
                     return lines;
                 });
 
-                loadLinesTask.ContinueWith((completedTask) =>
+                var processStockTask = loadLinesTask.ContinueWith((completedTask) =>
                 {
                     // Task is completed here, so we can use 'Result':
                     // This will return the array of strings:
@@ -89,6 +89,10 @@ namespace StockAnalyzer.CrossPlatform
                         Stocks.Items = data.Where(sp => sp.Identifier == StockIdentifier.Text);
                     });
                 });
+
+                processStockTask.ContinueWith(t => { })
+                    .ContinueWith(t => { })
+                    .ContinueWith(t => { });
             }
             catch (Exception ex)
             {
