@@ -56,14 +56,14 @@ namespace StockAnalyzer.CrossPlatform
         // This has to be 'async void', because it is an event:
         // Wrap in try-catch for safety:
         // Make sure that no code in the async-void method can throw an exception:
-        private void Search_Click(object sender, RoutedEventArgs e)
+        private async void Search_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 BeforeLoadingStockData();
                 
                 // Start work without locking the current thread:
-                Task.Run(() =>
+                await Task.Run(() =>
                 {
                     var lines = File.ReadAllLines("StockPrices_Small.csv");
                     var data = new List<StockPrice>();
