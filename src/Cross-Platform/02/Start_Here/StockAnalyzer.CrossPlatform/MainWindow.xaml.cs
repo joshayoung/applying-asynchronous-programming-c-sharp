@@ -90,9 +90,13 @@ namespace StockAnalyzer.CrossPlatform
                     });
                 });
 
-                processStockTask.ContinueWith(t => { })
-                    .ContinueWith(t => { })
-                    .ContinueWith(t => { });
+                processStockTask.ContinueWith(_ =>
+                {
+                    Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        AfterLoadingStockData();
+                    });
+                });
             }
             catch (Exception ex)
             {
