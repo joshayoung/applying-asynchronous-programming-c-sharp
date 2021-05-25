@@ -56,25 +56,35 @@ namespace StockAnalyzer.CrossPlatform
         // This has to be 'async void', because it is an event:
         // Wrap in try-catch for safety:
         // Make sure that no code in the async-void method can throw an exception:
-        private async void Search_Click(object sender, RoutedEventArgs e)
+        private void Search_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 BeforeLoadingStockData();
                 
-                // Start work without locking the current thread:
-                await Task.Run(() =>
+                // Represents and asynchronous operation that will return an array of strings:
+                // var loadLinesTask = Task.Run<string[]>(() =>
+                var loadLinesTask = Task.Run(() =>
                 {
                     var lines = File.ReadAllLines("StockPrices_Small.csv");
+                    return lines;
+                });
+
+                loadLinesTask.ContinueWith((completedTask) =>
+                {
+                    // Task is completed here, so we can use 'Result':
+                    // This will return the array of strings:
+                    var lines = completedTask.Result;
+
                     var data = new List<StockPrice>();
+
                     foreach (var line in lines.Skip(1))
                     {
                         var price = StockPrice.FromCSV(line);
                         data.Add(price);
                     }
 
-                    // Queues work on the UI thread:
-                    Dispatcher.Invoke(() =>
+                    Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         Stocks.Items = data.Where(sp => sp.Identifier == StockIdentifier.Text);
                     });
