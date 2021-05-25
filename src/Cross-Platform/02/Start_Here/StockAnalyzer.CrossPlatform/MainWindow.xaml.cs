@@ -8,6 +8,8 @@ using StockAnalyzer.Core.Domain;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
@@ -53,14 +55,20 @@ namespace StockAnalyzer.CrossPlatform
         // This has to be 'async void', because it is an event:
         // Wrap in try-catch for safety:
         // Make sure that no code in the async-void method can throw an exception:
-        private async void Search_Click(object sender, RoutedEventArgs e)
+        private void Search_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 BeforeLoadingStockData();
-                // Because we are not using 'await', we will not catch the exception:
-                // The error will therefore not be displayed on the page.
-                await GetStocks();
+                var lines = File.ReadAllLines("StockPrices_Small.csv");
+                var data = new List<StockPrice>();
+                foreach (var line in lines.Skip(1))
+                {
+                    var price = StockPrice.FromCSV(line);
+                    data.Add(price);
+                }
+
+                Stocks.Items = data.Where(sp => sp.Identifier == StockIdentifier.Text);
             }
             catch (Exception ex)
             {
