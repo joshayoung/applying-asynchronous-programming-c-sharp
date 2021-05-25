@@ -15,6 +15,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using StockAnalyzer.Core;
 
 namespace StockAnalyzer.CrossPlatform
@@ -60,15 +61,24 @@ namespace StockAnalyzer.CrossPlatform
             try
             {
                 BeforeLoadingStockData();
-                var lines = File.ReadAllLines("StockPrices_Small.csv");
-                var data = new List<StockPrice>();
-                foreach (var line in lines.Skip(1))
+                
+                // Start work without locking the current thread:
+                Task.Run(() =>
                 {
-                    var price = StockPrice.FromCSV(line);
-                    data.Add(price);
-                }
+                    var lines = File.ReadAllLines("StockPrices_Small.csv");
+                    var data = new List<StockPrice>();
+                    foreach (var line in lines.Skip(1))
+                    {
+                        var price = StockPrice.FromCSV(line);
+                        data.Add(price);
+                    }
 
-                Stocks.Items = data.Where(sp => sp.Identifier == StockIdentifier.Text);
+                    // Queues work on the UI thread:
+                    Dispatcher.Invoke(() =>
+                    {
+                        Stocks.Items = data.Where(sp => sp.Identifier == StockIdentifier.Text);
+                    });
+                });
             }
             catch (Exception ex)
             {
