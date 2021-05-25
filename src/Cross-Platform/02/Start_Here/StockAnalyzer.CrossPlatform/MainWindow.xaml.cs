@@ -64,10 +64,20 @@ namespace StockAnalyzer.CrossPlatform
                 
                 // Represents and asynchronous operation that will return an array of strings:
                 // var loadLinesTask = Task.Run<string[]>(() =>
-                var loadLinesTask = Task.Run(() =>
+                var loadLinesTask = Task.Run(async () =>
                 {
-                    var lines = File.ReadAllLines("StockPrices_Small.csv");
-                    return lines;
+                    using (var stream = new StreamReader(File.OpenRead("StockPrices_Small.csv")))
+                    {
+                        var lines = new List<string>();
+
+                        string line;
+                        while ((line = await stream.ReadLineAsync()) != null)
+                        {
+                            lines.Add(line);
+                        }
+
+                        return lines;
+                    }
                 });
 
                 var processStockTask = loadLinesTask.ContinueWith((completedTask) =>
