@@ -75,27 +75,17 @@ namespace StockAnalyzer.CrossPlatform
             try
             {
                 cancellationTokenSource = new CancellationTokenSource();
+                cancellationTokenSource.Token.Register(() =>
+                {
+                    Notes.Text = "Cancellation Requested";
+                });
                 Search.Content = "Cancel";
                 
                 BeforeLoadingStockData();
                 
                 // Represents and asynchronous operation that will return an array of strings:
                 // var loadLinesTask = Task.Run<string[]>(() =>
-                var loadLinesTask = Task.Run(async () =>
-                {
-                    using (var stream = new StreamReader(File.OpenRead("StockPrices_Small.csv")))
-                    {
-                        var lines = new List<string>();
-
-                        string line;
-                        while ((line = await stream.ReadLineAsync()) != null)
-                        {
-                            lines.Add(line);
-                        }
-
-                        return lines;
-                    }
-                });
+                var loadLinesTask = SearchForStocks(cancellationTokenSource.Token);
 
                 loadLinesTask.ContinueWith(t =>
                 {
@@ -131,7 +121,11 @@ namespace StockAnalyzer.CrossPlatform
                     {
                         Stocks.Items = data.Where(sp => sp.Identifier == StockIdentifier.Text);
                     });
-                }, TaskContinuationOptions.OnlyOnRanToCompletion);
+                }, 
+                        cancellationTokenSource.Token,
+                        TaskContinuationOptions.OnlyOnRanToCompletion,
+                        TaskScheduler.Current
+                        );
 
                 processStockTask.ContinueWith(_ =>
                 {
@@ -153,6 +147,29 @@ namespace StockAnalyzer.CrossPlatform
             {
                 AfterLoadingStockData();
             }
+        }
+
+        private static Task<List<string>> SearchForStocks(CancellationToken cancellationToken)
+        {
+            return Task.Run(async () =>
+            {
+                using (var stream = new StreamReader(File.OpenRead("StockPrices_Small.csv")))
+                {
+                    var lines = new List<string>();
+
+                    string line;
+                    while ((line = await stream.ReadLineAsync()) != null)
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            break;
+                        }
+                        lines.Add(line);
+                    }
+
+                    return lines;
+                }
+            }, cancellationToken);
         }
 
         // When exceptions are throw in 'async void', they cannot be caught:
