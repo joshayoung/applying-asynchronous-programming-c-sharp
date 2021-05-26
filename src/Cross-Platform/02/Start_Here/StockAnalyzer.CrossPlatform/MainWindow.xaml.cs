@@ -17,6 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using StockAnalyzer.Core;
+using StockAnalyzer.Core.Services;
 
 namespace StockAnalyzer.CrossPlatform
 {
@@ -55,10 +56,7 @@ namespace StockAnalyzer.CrossPlatform
 
         private CancellationTokenSource cancellationTokenSource;
 
-        // This has to be 'async void', because it is an event:
-        // Wrap in try-catch for safety:
-        // Make sure that no code in the async-void method can throw an exception:
-        private void Search_Click(object sender, RoutedEventArgs e)
+        private async void Search_Click(object sender, RoutedEventArgs e)
         {
 
             if (cancellationTokenSource != null)
@@ -82,62 +80,11 @@ namespace StockAnalyzer.CrossPlatform
                 Search.Content = "Cancel";
                 
                 BeforeLoadingStockData();
-                
-                // Represents and asynchronous operation that will return an array of strings:
-                // var loadLinesTask = Task.Run<string[]>(() =>
-                var loadLinesTask = SearchForStocks(cancellationTokenSource.Token);
 
-                loadLinesTask.ContinueWith(t =>
-                {
-                    // Will only execute if there was a problem completing the task:
-                    Dispatcher.UIThread.InvokeAsync(() =>
-                    {
-                        Notes.Text = t.Exception.InnerException.Message;
+                var service = new StockService();
 
-                    });
-                }, TaskContinuationOptions.OnlyOnFaulted);
-
-                var processStockTask = loadLinesTask
-                    .ContinueWith(t =>
-                    {
-                        // Log Something
-                        return t.Result;
-                    })
-                    .ContinueWith((completedTask) =>
-                {
-                    // Task is completed here, so we can use 'Result':
-                    // This will return the array of strings:
-                    var lines = completedTask.Result;
-
-                    var data = new List<StockPrice>();
-
-                    foreach (var line in lines.Skip(1))
-                    {
-                        var price = StockPrice.FromCSV(line);
-                        data.Add(price);
-                    }
-
-                    Dispatcher.UIThread.InvokeAsync(() =>
-                    {
-                        Stocks.Items = data.Where(sp => sp.Identifier == StockIdentifier.Text);
-                    });
-                }, 
-                        cancellationTokenSource.Token,
-                        TaskContinuationOptions.OnlyOnRanToCompletion,
-                        TaskScheduler.Current
-                        );
-
-                processStockTask.ContinueWith(_ =>
-                {
-                    Dispatcher.UIThread.InvokeAsync(() =>
-                    {
-                        AfterLoadingStockData();
-                        
-                        cancellationTokenSource = null;
-                        
-                        Search.Content = "Search";
-                    });
-                });
+                var data = await service.GetStockPricesFor(StockIdentifier.Text, cancellationTokenSource.Token);
+                Stocks.Items = data;
             }
             catch (Exception ex)
             {
@@ -146,6 +93,10 @@ namespace StockAnalyzer.CrossPlatform
             finally
             {
                 AfterLoadingStockData();
+
+                cancellationTokenSource = null;
+
+                Search.Content = "Search";
             }
         }
 
