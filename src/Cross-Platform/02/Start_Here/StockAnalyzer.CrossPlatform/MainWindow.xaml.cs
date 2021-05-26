@@ -53,13 +53,30 @@ namespace StockAnalyzer.CrossPlatform
         private static string API_URL = "https://ps-async.fekberg.com/api/stocks";
         private Stopwatch stopwatch = new Stopwatch();
 
+        private CancellationTokenSource cancellationTokenSource;
+
         // This has to be 'async void', because it is an event:
         // Wrap in try-catch for safety:
         // Make sure that no code in the async-void method can throw an exception:
         private void Search_Click(object sender, RoutedEventArgs e)
         {
+
+            if (cancellationTokenSource != null)
+            {
+                // Already have an instance of the cancellation token source?
+                // This means the button has already been pressed.
+                cancellationTokenSource.Cancel();
+                cancellationTokenSource = null;
+
+                Search.Content = "Search";
+                return;
+            }
+            
             try
             {
+                cancellationTokenSource = new CancellationTokenSource();
+                Search.Content = "Cancel";
+                
                 BeforeLoadingStockData();
                 
                 // Represents and asynchronous operation that will return an array of strings:
@@ -121,6 +138,10 @@ namespace StockAnalyzer.CrossPlatform
                     Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         AfterLoadingStockData();
+                        
+                        cancellationTokenSource = null;
+                        
+                        Search.Content = "Search";
                     });
                 });
             }
