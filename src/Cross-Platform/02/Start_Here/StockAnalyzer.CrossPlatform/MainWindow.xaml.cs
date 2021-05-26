@@ -66,7 +66,7 @@ namespace StockAnalyzer.CrossPlatform
                 // var loadLinesTask = Task.Run<string[]>(() =>
                 var loadLinesTask = Task.Run(async () =>
                 {
-                    using (var stream = new StreamReader(File.OpenRead("StockPrices_Small.csv")))
+                    using (var stream = new StreamReader(File.OpenRead("_StockPrices_Small.csv")))
                     {
                         var lines = new List<string>();
 
@@ -79,6 +79,16 @@ namespace StockAnalyzer.CrossPlatform
                         return lines;
                     }
                 });
+
+                loadLinesTask.ContinueWith(t =>
+                {
+                    // Will only execute if there was a problem completing the task:
+                    Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        Notes.Text = t.Exception.InnerException.Message;
+
+                    });
+                }, TaskContinuationOptions.OnlyOnFaulted);
 
                 var processStockTask = loadLinesTask.ContinueWith((completedTask) =>
                 {
@@ -98,7 +108,7 @@ namespace StockAnalyzer.CrossPlatform
                     {
                         Stocks.Items = data.Where(sp => sp.Identifier == StockIdentifier.Text);
                     });
-                });
+                }, TaskContinuationOptions.OnlyOnRanToCompletion);
 
                 processStockTask.ContinueWith(_ =>
                 {
