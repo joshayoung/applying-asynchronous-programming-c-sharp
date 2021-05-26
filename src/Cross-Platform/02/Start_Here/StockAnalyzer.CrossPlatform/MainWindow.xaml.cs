@@ -66,7 +66,7 @@ namespace StockAnalyzer.CrossPlatform
                 // var loadLinesTask = Task.Run<string[]>(() =>
                 var loadLinesTask = Task.Run(async () =>
                 {
-                    using (var stream = new StreamReader(File.OpenRead("_StockPrices_Small.csv")))
+                    using (var stream = new StreamReader(File.OpenRead("StockPrices_Small.csv")))
                     {
                         var lines = new List<string>();
 
@@ -90,7 +90,13 @@ namespace StockAnalyzer.CrossPlatform
                     });
                 }, TaskContinuationOptions.OnlyOnFaulted);
 
-                var processStockTask = loadLinesTask.ContinueWith((completedTask) =>
+                var processStockTask = loadLinesTask
+                    .ContinueWith(t =>
+                    {
+                        // Log Something
+                        return t.Result;
+                    })
+                    .ContinueWith((completedTask) =>
                 {
                     // Task is completed here, so we can use 'Result':
                     // This will return the array of strings:
